@@ -1,0 +1,19 @@
+TSP solved in 0 seconds:
+From City 1 to City 16
+From City 16 to City 12
+From City 12 to City 9
+From City 9 to City 5
+From City 5 to City 2
+From City 2 to City 10
+From City 10 to City 11
+From City 11 to City 3
+From City 3 to City 15
+From City 15 to City 14
+From City 14 to City 17
+From City 17 to City 6
+From City 6 to City 8
+From City 8 to City 7
+From City 7 to City 13
+From City 13 to City 4
+From City 4 to City 1
+Total distance: 2085.0
