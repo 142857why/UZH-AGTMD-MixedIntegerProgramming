@@ -4,10 +4,12 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Map;
 
 import edu.harvard.econcs.jopt.solver.IMIP;
 import edu.harvard.econcs.jopt.solver.IMIPResult;
 import edu.harvard.econcs.jopt.solver.client.SolverClient;
+import edu.harvard.econcs.jopt.solver.mip.*;
 
 public class IPExercise3 {
 
@@ -43,11 +45,61 @@ public class IPExercise3 {
 		/*
 		 * TODO: Implement MIP.
 		 */
+		mip = new MIP();
+		int n = this.numberOfCities;
+		int S = n - 1;
+		Variable[][] x = new Variable[n][n];
+		Variable[][] y = new Variable[n][n];
+		mip.setObjectiveMax(false);
+		for (int i = 0; i < n; ++i) {
+			for (int j = 0; j < n; ++j) {
+				x[i][j] = new Variable("x_" + (i+1) + "_" + (j+1), VarType.INT, 0, 1);
+				y[i][j] = new Variable("y_" + (i+1) + "_" + (j+1), VarType.INT, 0, Integer.MAX_VALUE);
+				mip.add(x[i][j]);
+				mip.add(y[i][j]);
+				mip.addObjectiveTerm(distances[i][j], x[i][j]);
+			}
+		}
+		for (int j = 0; j < n; ++j) {
+			Constraint c_eq1 = new Constraint(CompareType.EQ, 1);
+			for (int i = 0; i < n; ++i) {
+				c_eq1.addTerm(1, x[i][j]);
+			}
+			mip.add(c_eq1);
+		}
+
+		for (int i = 0; i < n; ++i) {
+			Constraint c_eq1 = new Constraint(CompareType.EQ, 1);
+			for (int j = 0; j < n; ++j) {
+				c_eq1.addTerm(1, x[i][j]);
+			}
+			mip.add(c_eq1);
+		}
+
+		for (int i = 1; i < n; ++i) {
+			Constraint c_flow_eq1 = new Constraint(CompareType.EQ, 1);
+
+			for (int j = 0; j < n; ++j) {
+				if (j == i) continue;
+				c_flow_eq1.addTerm(1, y[i][j]);
+				Constraint c_flow_upperbound = new Constraint(CompareType.LEQ, 0);
+				c_flow_upperbound.addTerm(1, y[i][j]);
+				c_flow_upperbound.addTerm(-S, x[i][j]);
+				mip.add(c_flow_upperbound);
+			}
+			for (int j = 1; j < n; ++j) {
+				if (j == i) continue;
+				c_flow_eq1.addTerm(-1, y[j][i]);
+			}
+			mip.add(c_flow_eq1);
+		}
+//		System.out.println(mip);
 	}
 
 	private void solve() {
 		SolverClient solverClient = new SolverClient();
 		result = solverClient.solve(mip);
+//		System.out.println(result);
 	}
 
 	public String toString() {
@@ -57,10 +109,23 @@ public class IPExercise3 {
 
 		String returnString = "TSP solved in " + result.getSolveTime() / 1000 + " seconds:\n";
 
-		/*
-		 * TODO: Print your result as illustrated in example_output.txt. (From City X to
-		 * City Y...)
-		 */
+		// TODO: Print your result as illustrated in example_output.txt. (From City X to City Y...)
+		Map<String, Double> entry = result.getValues();
+		int[] nextCities = new int[this.numberOfCities+1]; // this array stores the index of the next cities
+		for (String s : entry.keySet()) {
+			if (s.charAt(0) == 'y') continue;
+			if (entry.get(s) == 1.0) {
+				String[] s_list = s.split("_");
+				nextCities[Integer.parseInt(s_list[1])] = Integer.parseInt(s_list[2]);
+			}
+		}
+
+		int startCityIndex = 1, endCityIndex = -1;
+		while (endCityIndex != 1) {
+			endCityIndex = nextCities[startCityIndex];
+			returnString += "From City " + startCityIndex + " to City " + endCityIndex + "\n";
+			startCityIndex = endCityIndex;
+		}
 
 		returnString += "Total distance: " + result.getObjectiveValue() + "\n";
 		return returnString;
